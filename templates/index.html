@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero-content">
+        <h1>Welcome to iPhone Store</h1>
+        <p>Discover Brand New and Refurbished iPhones</p>
+        <p>From iPhone XR to iPhone 17</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="filters">
+        <form method="get" class="filter-form">
+            <select name="model" onchange="this.form.submit()">
+                <option value="">All Models</option>
+                {% for model in models %}
+                    <option value="{{ model[0] }}" {% if request.args.get('model') == model[0] %}selected{% endif %}>
+                        {{ model[0] }}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <select name="condition" onchange="this.form.submit()">
+                <option value="">All Conditions</option>
+                <option value="New" {% if request.args.get('condition') == 'New' %}selected{% endif %}>Brand New</option>
+                <option value="Refurbished" {% if request.args.get('condition') == 'Refurbished' %}selected{% endif %}>Refurbished</option>
+            </select>
+        </form>
+    </div>
+
+    <div class="products-grid">
+        {% for iphone in iphones.items %}
+        <div class="product-card">
+            <img src="{{ iphone.image_url }}" alt="{{ iphone.model }}">
+            <div class="product-info">
+                <h3>{{ iphone.model }}</h3>
+                <p class="storage">{{ iphone.storage }} - {{ iphone.color }}</p>
+                <p class="condition {% if iphone.condition == 'New' %}condition-new{% else %}condition-refurbished{% endif %}">
+                    {{ iphone.condition }}
+                </p>
+                <p class="price">${{ "%.2f"|format(iphone.price) }}</p>
+                <p class="stock {% if iphone.stock > 0 %}in-stock{% else %}out-of-stock{% endif %}">
+                    {% if iphone.stock > 0 %}
+                        In Stock ({{ iphone.stock }})
+                    {% else %}
+                        Out of Stock
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('product_detail', product_id=iphone.id) }}" class="btn btn-primary">View Details</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if iphones.has_prev %}
+            <a href="{{ url_for('index', page=iphones.prev_num, model=request.args.get('model'), condition=request.args.get('condition')) }}" class="btn">Previous</a>
+        {% endif %}
+
+        {% for page_num in iphones.iter_pages() %}
+            {% if page_num %}
+                {% if page_num == iphones.page %}
+                    <span class="current">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('index', page=page_num, model=request.args.get('model'), condition=request.args.get('condition')) }}" class="btn">{{ page_num }}</a>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {% if iphones.has_next %}
+            <a href="{{ url_for('index', page=iphones.next_num, model=request.args.get('model'), condition=request.args.get('condition')) }}" class="btn">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

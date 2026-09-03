@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="product-detail">
+        <div class="product-image">
+            <img src="{{ iphone.image_url }}" alt="{{ iphone.model }}">
+        </div>
+        
+        <div class="product-details">
+            <h1>{{ iphone.model }}</h1>
+            
+            <div class="product-specs">
+                <p><strong>Storage:</strong> {{ iphone.storage }}</p>
+                <p><strong>Color:</strong> {{ iphone.color }}</p>
+                <p><strong>Condition:</strong> 
+                    <span class="badge {% if iphone.condition == 'New' %}badge-success{% else %}badge-info{% endif %}">
+                        {{ iphone.condition }}
+                    </span>
+                </p>
+            </div>
+
+            <div class="product-description">
+                <h3>Description</h3>
+                <p>{{ iphone.description }}</p>
+            </div>
+
+            <div class="product-availability">
+                {% if iphone.stock > 0 %}
+                    <p class="in-stock">✓ In Stock ({{ iphone.stock }} available)</p>
+                {% else %}
+                    <p class="out-of-stock">✗ Out of Stock</p>
+                {% endif %}
+            </div>
+
+            <div class="product-price">
+                <h2>${{ "%.2f"|format(iphone.price) }}</h2>
+            </div>
+
+            {% if current_user.is_authenticated and iphone.stock > 0 %}
+            <form id="addToCartForm" class="add-to-cart-form">
+                <div class="quantity-selector">
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ iphone.stock }}">
+                </div>
+                <button type="submit" class="btn btn-large btn-success">Add to Cart</button>
+            </form>
+            {% elif not current_user.is_authenticated %}
+            <p><a href="{{ url_for('login') }}" class="btn btn-large btn-primary">Login to Add to Cart</a></p>
+            {% endif %}
+
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Products</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('addToCartForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const quantity = document.getElementById('quantity').value;
+    
+    fetch('{{ url_for("add_to_cart") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            iphone_id: {{ iphone.id }},
+            quantity: parseInt(quantity)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert('Added to cart successfully!');
+            document.getElementById('quantity').value = '1';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+</script>
+{% endblock %}
